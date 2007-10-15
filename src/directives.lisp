@@ -1,5 +1,7 @@
 (in-package :armish)
 
+(defvar *string-end* 0)
+
 (defmacro define-directive (name args &body body)
   "Makes a new instruction function and adds it to the instruction set."
   `(setf (gethash ',name *directives*) (lambda ,args ,@body)))
@@ -39,10 +41,13 @@
   (process-bytes bytes 64))
 
 (define-directive string (&rest strings)
-  (let ((null-terminated (member :null-terminated strings))
-        (strings-string (apply #'concatenate 'string (remove :null-terminated strings))))
+  (let ((null-terminated (or (member :null-terminated strings)
+                             (member :nt strings)))
+        (strings-string (apply #'concatenate
+                               'string
+                               (delete :nt (delete :null-terminated strings)))))
     (if null-terminated
-        (append (reform-string strings-string) '(0))
+        (append (reform-string strings-string) '(*string-end*))
         (reform-string strings-string))))
 
 (define-directive space (size &optional (fill 0))

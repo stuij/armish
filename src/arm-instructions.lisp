@@ -627,8 +627,8 @@ and ONLY a `^', so not a(n) ~a")
       (assert (not (= rd 15)))
       (+ (ash #b00010 23) (ash #b001111 16) (ash rd 12)
          (ecase sr
-           ('cpsr 0)
-           ('spsr (ash 1 22))))))
+           (cpsr 0)
+           (spsr (ash 1 22))))))
   (make-and-install-condition-fns 'mrs))
 
 ;; msr

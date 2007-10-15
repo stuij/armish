@@ -3,8 +3,8 @@
 
 (defparameter *aasm-name* #-win32 "aasm" #+win32 "aasm.exe")
 
-(defparameter *aasm-dir* (append (pathname-directory *load-truename*)
-                                 (list "aasm")))
+(defparameter *aasm-dir* (merge-pathnames #p"aasm" 
+                 (asdf:component-pathname (asdf:find-system :armish))))
 
 ;; some assemble shortcuts
 (defmacro assemble-fn (name generic-special specified-special)
@@ -49,7 +49,7 @@
                 'v5TE))))
 
 (defun control-check (ass-instr &optional mode)
-  (let ((prog-name (concatenate 'string (namestring (make-pathname :directory *aasm-dir*)) *aasm-name*))
+  (let ((prog-name (concatenate 'string (namestring *aasm-dir*) "/" *aasm-name*))
         (ass-file (make-pathname :directory *aasm-dir* :name "check" :type "s"))
         (lst-file (make-pathname :directory *aasm-dir* :name "check" :type "list")))
     (multiple-value-bind (mode version)
@@ -87,10 +87,10 @@
 
 (defun %instr-dump (instr &optional mode)
   (let* ((instr-list (funcall (case mode
-                                ('v5TE-arm #'arm9-arm)
-                                ('v5TE-thumb #'arm9-thumb)
-                                ('v4T-arm #'arm7-arm)
-                                ('v4T-thumb #'arm7-thumb)
+                                (v5TE-arm #'arm9-arm)
+                                (v5TE-thumb #'arm9-thumb)
+                                (v4T-arm #'arm7-arm)
+                                (v4T-thumb #'arm7-thumb)
                                 (otherwise #'arm9-arm))
                               (list instr)))
          (list-nr (big-endian-word-byte-list-to-nr instr-list)))

@@ -51,7 +51,7 @@
 
 (defun check-feature (feature)
   (case feature
-    ('M (check-m))
+    (M (check-m))
     (otherwise (error "feature ~a not supported" feature))))
 
 ;; the meat of the assembler; it's a bit skinny if you ask me
@@ -94,13 +94,13 @@
 
 (defun resolve-symbol (symbol)
   (case symbol
-    ('code32 (progn (set-mode *arm*)
+    (code32 (progn (set-mode *arm*)
                     (align-assembled)))
-    ('code16 (progn (set-mode *thumb*)
+    (code16 (progn (set-mode *thumb*)
                     (align-assembled 2)))
-    ('align    (align-assembled))
-    ('align-hw (align-assembled 2))
-    ('pool     (dump-pool))
+    (align    (align-assembled))
+    (align-hw (align-assembled 2))
+    (pool     (dump-pool))
     (otherwise (if (= *pass* 0)
                    (setf (gethash symbol *labels*) *here*)))))
 
