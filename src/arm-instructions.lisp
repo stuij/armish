@@ -178,6 +178,11 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
   (if (or (translate-register reg) (translate-neg-register reg))
       t nil))
 
+(defun any-reg-p (reg)
+  (if (or (plus-min-reg-p reg)
+          (translate-coproc-register reg))
+      t nil))
+
 ;;}}}
 ;;{{{ instructions
 
