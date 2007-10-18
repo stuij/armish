@@ -434,8 +434,8 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
          (regs-length (length regs)))
     (ensure-list
      (case regs-length
-       (2 (funcall two-reg-fn regs))
        (1 (reg-to-bit (funcall one-reg-fn regs)))
+       (2 (funcall two-reg-fn regs))
        (otherwise (error "no or to much registers in reglist ~a" regs))))))
 
 (defun gather-reglist-values (reglist)
