@@ -424,13 +424,22 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
        collect (reg-to-bit i))))
 
 (defun expand-reg-token (reg-token)
-  (let ((regs (split-sequence #\- (format nil "~a" reg-token))))
-    (if (> (length regs) 1)
-        (enum-regs regs)
-        (reg-to-bit (e-translate-register (intern (car regs)))))))
+  (expand-mv-token-list reg-token
+                        (lambda (reg)
+                         (e-translate-register (intern (car reg))))
+                        #'enum-regs))
+
+(defun expand-mv-token-list (reg-token one-reg-fn two-reg-fn)
+  (let* ((regs (split-sequence #\- (format nil "~a" reg-token)))
+         (regs-length (length regs)))
+    (ensure-list
+     (case regs-length
+       (2 (funcall two-reg-fn regs))
+       (1 (reg-to-bit (funcall one-reg-fn regs)))
+       (otherwise (error "no or to much registers in reglist ~a" regs))))))
 
 (defun gather-reglist-values (reglist)
-  (let ((expanded-car (ensure-list (expand-reg-token (car reglist)))))
+  (let ((expanded-car (expand-reg-token (car reglist))))
     (if (not (cdr reglist))
         expanded-car
         (let ((expanded-cdr (gather-reglist-values (cdr reglist))))
