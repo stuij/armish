@@ -1,6 +1,5 @@
 (in-package :armish)
 
-
 (defparameter *aasm-name* #-win32 "aasm" #+win32 "aasm.exe")
 
 (defparameter *aasm-dir* (merge-pathnames #p"aasm" 
@@ -140,7 +139,6 @@
      ,@(loop for (control-instr  arm-instr) in instr-lst
           collect (=instr control-instr arm-instr mode))))
 
-(def-suite arm-suite :description "test arm instructions for correctness")
 (in-suite arm-suite)
 
 ;; arm instruction tests
@@ -188,11 +186,11 @@
   ("strald r2, [pc], -pc"   (strald r2 (pc) -pc)))
 
 (test-instructions l-s-multiple v5TE-arm
-  ("ldmea r1, {r3-r5, r2}"             (ldmea r1 (r3-r5 r2)))
-  ("stmib r2, {r2, r4-r5}"             (stmib r2 (r2 r4-r5)))
+  ("ldmea r1, {r3-r5, r2}"             (ldmea r1 (r3_r5 r2)))
+  ("stmib r2, {r2, r4-r5}"             (stmib r2 (r2 r4_r5)))
   ("stmgefa r2, {r15}^"                (stmgefa r2 (r15)^))
-  ("ldmhied r12!, {r2, r15, r13-r14}"  (ldmhied r12! (r2 r15 r13-r14)))
-  ("ldmloia r12!, {r2, r15, r13-r14}^" (ldmloia r12! (r2 r15 r13-r14)^)))
+  ("ldmhied r12!, {r2, r15, r13-r14}"  (ldmhied r12! (r2 r15 r13_r14)))
+  ("ldmloia r12!, {r2, r15, r13-r14}^" (ldmloia r12! (r2 r15 r13_r14)^)))
 
 (test-instructions l-s-coprocessor v5TE-arm
   ("ldc p2, c2, [r2], #2*4"       (ldc p2 c2 (r2) 8))

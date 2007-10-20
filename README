@@ -131,13 +131,15 @@ helpers.lisp for functions that might aid you.
 
 Basically this assembler follows the arm assembler syntax but then lispified:
 Wrap the expressions in parenthesis, get rid of the comma's, substitute curly
-braces and braces for parenthesis and get rid of the squiggly things before
+braces and braces for parenthesis, substitute - for _ in register lists for
+multiple load/store instructions and get rid of the pound signs before
 literals and immediates. Barrel rolling modifiers and labels are keywords.
 
-examples: standard assembly syntax lisp syntax
+examples:
+standard assembly syntax            lisp syntax
 
-ldmhied r12!, {r2, r15, r13-r14} -> (ldmhied r12! (r2 r15 r13-r14)) ldrbt r5,
-[r2], -r1 ror #12 -> (ldrbt r5 (r2) -r1 :ror 12)
+ldmhied r12!, {r2, r15, r13-r14} -> (ldmhied r12! (r2 r15 r13_r14))
+ldrbt r5, [r2], -r1 ror #12      -> (ldrbt r5 (r2) -r1 :ror 12)
 
 For a pretty extensive, case by case comparison of the instructions, see the
 test cases in the test.lisp file.
@@ -212,7 +214,8 @@ traditional assembler. Who knows, maybe you can even have some use for it.
 
 ** Todo
 
-- no arm or thumb adrl pseudo-instruction in the arm ldr instruction, encode a
+- no arm or thumb adrl pseudo-instruction
+- in the arm ldr instruction, encode a
 - constant load more efficiently if possible in stead of always loading from
 - memory write enhanced dsp instructions
 

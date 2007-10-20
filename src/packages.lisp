@@ -10,4 +10,7 @@
   (:export :assemble
            :align
            :aligned
-           :*string-end*))
+           
+           :*string-end*
+
+           :emit-asm))

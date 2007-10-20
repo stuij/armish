@@ -12,11 +12,12 @@
   ((:module :src
             :components
             ((:file "packages")
-             (:file "helpers"            :depends-on ("packages"))
-             (:file "assembler"          :depends-on ("helpers"))
-             (:file "arm-instructions"   :depends-on ("assembler"))
-             (:file "thumb-instructions" :depends-on ("assembler"))
-             (:file "directives"         :depends-on ("assembler"))
-             (:file "test"               :depends-on ("arm-instructions"
-                                                     "thumb-instructions"
-                                                     "directives"))))))
+             (:file "helpers"               :depends-on ("packages"))
+             (:file "assembler"             :depends-on ("helpers"))
+             (:file "arm-instructions"      :depends-on ("assembler"))
+             (:file "thumb-instructions"    :depends-on ("assembler"))
+             (:file "directives"            :depends-on ("assembler"))
+             (:file "arm-lisp-interworking" :depends-on ("arm-instructions"))
+             (:file "test"                  :depends-on ("arm-instructions"
+                                                         "thumb-instructions"
+                                                         "directives"))))))
