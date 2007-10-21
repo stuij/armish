@@ -33,7 +33,7 @@
 
 (defun maybe-mend-multi-reg (reg-list)
   (if (eql (length reg-list) 1)
-      reg-list
+      (car reg-list)
       (concat-symbol (car reg-list) #\_ (cadr reg-list))))
 
 (defun mend-bang-reg (val)
