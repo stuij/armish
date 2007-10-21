@@ -106,14 +106,33 @@ forms - are, yes, the forms to be assembled
 
 example usage:
 (assemble 'arm9 'arm
-  (:label (mov r3 r4) (b :label)))
+  '(:label (mov r3 r4) (b :label)))
 
 ==> (4 48 160 225 253 255 255 234)
 
- 
+
+- emit-asm - emits a list of assembly forms ready to be fed to assemble. Emit-asm
+escapes variables which are not part of the assembler syntax, so we can enrich the
+assembler with variables, while still keeping a clean, uniform syntax.
+
+syntax: (emit-asm form1 form2 ...)
+
+example usage:
+
+(let ((foo 'r4)
+      (bar 'r6))
+  (emit-asm
+   :loop
+   (stmib r3 (r3 foo_bar))
+   (b :loop)))
+
+==> (:LOOP (STMIB R3 (R3 R4_R6)) (B :LOOP))
+
+
 - align - aligns a list of bytes to a bytes byte boundry by padding
-zeroes. Defaults to four if bytes is not supplied syntax: (align byte-lst
-&optional bytes)
+zeroes. Defaults to four if bytes is not supplied
+
+syntax: (align byte-lst &optional bytes)
 
 example usage: (align '(1 2 3 4 5)) ==> (1 2 3 4 5 0 0 0)
 
