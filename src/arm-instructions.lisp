@@ -327,9 +327,10 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
   (expand-mr-token-list reg-token
                         (lambda (reg)
                           (reg-to-bit (e-translate-register (car reg))))
-                        #'enum-regs))
+                        #'enum-regs
+                        'armish))
 
-(defun expand-mr-token-list (reg-token one-reg-fn two-reg-fn)
+(defun expand-mr-token-list (reg-token one-reg-fn two-reg-fn &optional package)
   "mv = multi-value, as in multiple tokens, seperated by underscores (_)
    make them into lists and break them up. then let the specified functions
    do with them what they wish"
@@ -337,7 +338,9 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
          (regs-length (length regs))
          (symbolified-regs (when regs
                              (loop for reg in regs
-                                collect (intern reg)))))
+                                collect (if package
+                                            (intern reg package)
+                                            (intern reg))))))
     (ensure-list
      (case regs-length
        (1 (funcall one-reg-fn symbolified-regs))
