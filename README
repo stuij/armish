@@ -86,7 +86,7 @@ file that can help with debugging.
 ** Exported functions
 
 - assemble - Assembles forms into a list of opcodes for specified chip and
-processor mode.  syntax: (assemble chip mode &body forms) where:
+processor mode.  syntax: (assemble chip mode forms) where:
 
 chip - decides which chipset to assemble for - is a number or a symbol
 
@@ -104,8 +104,11 @@ following symbols: 'arm 'code32 'thumb 'code16
 
 forms - are, yes, the forms to be assembled
 
-example usage: (assemble arm9 arm :label (mov r3 r4) (b :label)) ==> (4 48 160
-225 253 255 255 234)
+example usage:
+(assemble 'arm9 'arm
+  (:label (mov r3 r4) (b :label)))
+
+==> (4 48 160 225 253 255 255 234)
 
  
 - align - aligns a list of bytes to a bytes byte boundry by padding

@@ -178,5 +178,5 @@
       (bind-next-pool)
       (align (pass-2 pure-forms)))))
 
-(defmacro assemble (chip mode &body forms)
-  `(%assemble ',forms :chip ',chip :mode ',mode))
+(defun assemble (chip mode forms)
+  (%assemble forms :chip chip :mode mode))
