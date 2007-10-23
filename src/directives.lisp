@@ -14,7 +14,7 @@
                             nconc (reverse (nr-to-octets nr bit-size))))))
     (loop while (not (null 8-bit-bytes))
        nconc (remove nil (loop for i from 1 to 4
-                             collect (pop 8-bit-bytes))))))
+                            collect (pop 8-bit-bytes))))))
 
 (define-directive dcb (&rest bytes)
   (process-bytes bytes 8))
@@ -39,6 +39,13 @@
 
 (define-directive quad (&rest bytes)
   (process-bytes bytes 64))
+
+(define-directive bin (pack-size bin)
+  (process-bytes bin (* pack-size 8)))
+
+(define-directive binae (pack-size bins)
+  (loop for bin in bins
+     nconc (process-bytes bin (* pack-size 8))))
 
 (define-directive string (&rest strings)
   (let ((null-terminated (or (member :null-terminated strings)
