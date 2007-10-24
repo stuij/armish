@@ -66,7 +66,9 @@
   (defun %emit-asm (instrs)
     (loop for item in instrs
        collect (etypecase item
-                 (cons (append '(list) (%emit-asm item)))
+                 (cons (if (eql (intern (format nil "~A" (car item)) 'armish) 'ea)
+                           (cadr item)
+                           (append '(list) (%emit-asm item))))
                  (keyword item)
                  (symbol (escape-assembly-constants item))
                  (number item)))))
