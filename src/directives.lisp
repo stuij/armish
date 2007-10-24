@@ -45,7 +45,7 @@
 
 (define-directive binae (pack-size bins)
   (loop for bin in bins
-     nconc (process-bytes bin (* pack-size 8))))
+     append (process-bytes bin (* pack-size 8))))
 
 (define-directive string (&rest strings)
   (let ((null-terminated (or (member :null-terminated strings)
