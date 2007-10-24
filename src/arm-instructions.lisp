@@ -227,13 +227,17 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
             (cond (,@( ;; a very crude load constant implementation.
                       ;; TODO: encode the constant more efficiently if possible in stead of always loading from memory. 
                       if ldr '((integerp rn-list)
-                               (assert (non-neg-int-range rn-list #xFFFFFFFF))
-                               (let ((offset 0))
+                               (let ((offset 0)
+                                     (encodee (if (eql index/update :pi)
+                                                  (progn
+                                                    (assert (non-neg-int-range rn-list #xFFFFFFFF))
+                                                    rn-list)
+                                                  (encode-twos-complement rn-list 32))))
                                  (if (zerop *pass*)
-                                     (unless (member rn-list *pool*)
-                                       (push rn-list *pool*)) ; add literal to pool
+                                     (unless (member encodee *pool*)
+                                       (push encodee *pool*)) ; add literal to pool
                                      (incf offset (+ (- (pool-position) (+ *here* 8))
-                                                     (ash (position rn-list *pool*) 2)))) ; find pc offset to literal
+                                                     (ash (position encodee *pool*) 2)))) ; find pc offset to literal
                                  (+ (ash 1 24) (l-s-offset offset shifter shiftee))))
                       '(nil)))
                   ;; pre-indexed

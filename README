@@ -206,9 +206,14 @@ will be null-terminated.
 
 * pseudo-instructions
 
-(adr register label) - loads the address of label in register (ldr register
-literal) - loads the value of literal in register (nop) - no opcode; translates
-to (mov r0 r0) in arm and (mov r8 r8) in thumb
+(ldr register literal) - loads the value of literal in register. Encodes in two's
+complement
+(ldr register literal :pi) - loads the value of literal in register, as Positive
+Integer, understand (or 0)
+
+(adr register label) - loads the address of label in register
+(nop) - no opcode; translates into (mov r0 r0) in arm and
+(mov r8 r8) in thumb
 
 
 * register and coprocessor syntax
