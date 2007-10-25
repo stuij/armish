@@ -478,7 +478,10 @@ and ONLY a `^', so not a(n) ~a")
 
 (progn
   (define-arm-instruction b (label)
-    (let ((offset (- (label-address label) (+ *here* 8))))
+    (let* ((l-addr (label-address label))
+           (offset (if l-addr
+                       (- l-addr (+ *here* 8))
+                       (error "label :~A in (b :~A) was never defined" label label))))
       (assert (zerop (logand offset 3))) ; 4-byte aligned offset
       (+ (ash #b101 25)
          (encode-twos-complement (ash offset -2) 24))))
@@ -493,7 +496,10 @@ and ONLY a `^', so not a(n) ~a")
            (assert (not (= it 15)))
            (+ #x12FFF30
               it))
-         (let ((offset (- (label-address target) (+ *here* 8))))
+         (let* ((l-addr (label-address target))
+               (offset (if l-addr
+                           (- l-addr (+ *here* 8))
+                           (error "label :~A in (blx :~A) was never defined" target target))))
            (assert (zerop (logand offset 3))) ; 4-byte aligned offset
            (+ (ash #b1111101 25)
               (logand (ash offset -2) #xffffff)

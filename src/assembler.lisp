@@ -12,10 +12,10 @@
 (defvar *size*)                         ; final size of pass
 (defvar *mode*)                         ; arm or thumb
 (defvar *labels*)                       ; local assembly labels
-(defvar *version*)                      ; processor capabilities and enhancements
+(defvar *version*)                     ; processor capabilities and enhancements
 (defvar *pool*)                         ; current active literal pool
 (defvar *pool-position*)                ; position of the current pool
-(defvar *pool-pairs*)                   ; list of cons who's car is a literary pool and who's cdr is
+(defvar *pool-pairs*) ; list of cons who's car is a literary pool and who's cdr is
                                         ; the end address of it's offset
 
 ;; setters, getters and checkers
@@ -95,9 +95,9 @@
 (defun resolve-symbol (symbol)
   (case symbol
     (code32 (progn (set-mode *arm*)
-                    (align-assembled)))
+                   (align-assembled)))
     (code16 (progn (set-mode *thumb*)
-                    (align-assembled 2)))
+                   (align-assembled 2)))
     (align    (align-assembled))
     (align-hw (align-assembled 2))
     (pool     (dump-pool))
@@ -106,14 +106,15 @@
 
 (defun assemble-form (form)
   "Looks up an instruction in the instruction set and assembles with arguments."
-  (let ((ass-fn (gethash (first form) *mode*)))
-    (if ass-fn
-        (mapcan #'(lambda (opcode)
-                    (when opcode
-                      (cond ((eq *mode* *arm*) (nr-to-big-endian-word-byte-list opcode))
-                            ((eq *mode* *thumb*) (nr-to-big-endian-halfword-byte-list opcode)))))
-                (ensure-list (apply ass-fn (rest form))))
-        (apply (gethash (first form) *directives*) (rest form)))))
+  (aif (gethash (first form) *mode*)
+       (mapcan #'(lambda (opcode)
+                   (when opcode
+                     (cond ((eq *mode* *arm*) (nr-to-big-endian-word-byte-list opcode))
+                           ((eq *mode* *thumb*) (nr-to-big-endian-halfword-byte-list opcode)))))
+               (ensure-list (apply it (rest form))))
+       (aif (gethash (first form) *directives*)
+            (apply it (rest form))
+            (error "mnemonic ~A from form ~A not recognized" (first form) form))))
 
 (defun reform-string (string)
   (vector-to-list (string-to-octets string :utf-8)))
