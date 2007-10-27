@@ -163,7 +163,9 @@
   (defun %assemble (forms &key washed chip mode)
     "Two pass assembler for all given forms and labels."
     (let* ( ;; internalize symbols so we can compare them
-           (pure-forms (if washed forms (clean-form (append forms '(align pool)))))
+           (pure-forms (if washed
+                           forms
+                           (clean-form (append forms '(align pool :code-end)))))
            ;; setup initial specials
            (*labels* (make-hash-table))
            (*pool* '())

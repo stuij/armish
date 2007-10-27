@@ -204,6 +204,10 @@ will be null-terminated.
 
 :label - an unadulterated keyword will be treated as a label
 
+For convenience the to be compiled forms are appended with the :code-end label,
+for if one wants to jump to code which might be placed directly after the compiled
+code.
+
 * pseudo-instructions
 
 (ldr register literal) - loads the value of literal in register. Encodes in two's
