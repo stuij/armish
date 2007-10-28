@@ -77,7 +77,10 @@
   `(list
     ,@(loop for expr in instrs
          collect (etypecase expr
-                   (cons (append (list 'list `',(car expr)) 
-                                 (if (cdr expr) (%emit-asm (cdr expr)))))
+                   (cons (if (eql (intern (format nil "~A" (car expr)) 'armish) 'ea)
+                             (cadr expr)
+                             (append (list 'list `',(car expr)) 
+                                     (if (cdr expr) (%emit-asm (cdr expr))))))
                    (keyword expr)
-                   (symbol `',expr)))))
+                   (symbol `',expr)
+                   (string expr)))))
