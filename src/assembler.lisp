@@ -136,7 +136,7 @@
   "Second pass assembler that actually returns opcodes."
   (let ((*pass* 1)
         (*here* 0))
-    (loop for form in forms nconc
+    (loop for form in forms append
          (cond
            ((symbolp form)
             (resolve-symbol form))
@@ -167,6 +167,7 @@
                            forms
                            (clean-form (append forms '(align pool :code-end)))))
            ;; setup initial specials
+           
            (*labels* (make-hash-table))
            (*pool* '())
            (*pool-position* 0)
