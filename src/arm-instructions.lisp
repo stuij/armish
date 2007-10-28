@@ -482,7 +482,8 @@ and ONLY a `^', so not a(n) ~a")
            (offset (if l-addr
                        (- l-addr (+ *here* 8))
                        (error "label :~A in (b :~A) was never defined" label label))))
-      (assert (zerop (logand offset 3))) ; 4-byte aligned offset
+      (unless (zerop (logand offset 3))
+        (error "when assembling (b :~A), i noticed your instructions aren't four byte aligned" label)) ; 4-byte aligned offset
       (+ (ash #b101 25)
          (encode-twos-complement (ash offset -2) 24))))
   (make-and-install-condition-fns (enhance-instr-fn 'b 'l (ash #b1 24)))
