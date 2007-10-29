@@ -47,6 +47,10 @@
   (loop for bin in bins
      append (process-bytes bin (* pack-size 8))))
 
+(defun reform-string (string)
+  (process-bytes (vector-to-list
+                  (string-to-octets string :utf-8)) 32))
+
 (define-directive string (&rest strings)
   (let ((null-terminated (or (member :null-terminated strings)
                              (member :nt strings)))

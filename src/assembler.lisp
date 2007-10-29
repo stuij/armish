@@ -116,9 +116,6 @@
             (apply it (rest form))
             (error "mnemonic ~A from form ~A not recognized" (first form) form))))
 
-(defun reform-string (string)
-  (vector-to-list (string-to-octets string :utf-8)))
-
 (defun pass-1 (forms)
   "First pass assembler to collect all label addresses."
   (let ((*pass* 0)
