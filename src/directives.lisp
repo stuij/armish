@@ -6,10 +6,8 @@
 
 (defun process-bytes (bytes bit-size)
   (assert bytes)
-  (let ((8-bit-bytes (if (= bit-size 8)
-                         bytes
-                         (loop for nr in bytes
-                            nconc (reverse (nr-to-octets nr bit-size))))))
+  (let ((8-bit-bytes (loop for nr in bytes
+                        nconc (reverse (nr-to-octets nr bit-size)))))
     (loop while (not (null 8-bit-bytes))
        nconc (remove nil (loop for i from 1 to 4
                             collect (pop 8-bit-bytes))))))
@@ -41,9 +39,9 @@
 (define-directive bin (pack-size bin)
   (process-bytes bin (* pack-size 8)))
 
-(define-directive binae (pack-size bins)
+(define-directive binae (bins)
   (loop for bin in bins
-     append (process-bytes bin (* pack-size 8))))
+     append (process-bytes (cadr bin) (* (car bin) 8))))
 
 (defun reform-string (string)
   (process-bytes (vector-to-list
