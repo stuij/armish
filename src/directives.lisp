@@ -47,7 +47,7 @@
 
 (defun reform-string (string)
   (process-bytes (vector-to-list
-                  (string-to-octets string :utf-8)) 32))
+                  (string-to-octets string *string-encoding*)) 8))
 
 (define-directive string (&rest strings)
   (let ((null-terminated (or (member :null-terminated strings)
