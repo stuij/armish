@@ -12,5 +12,6 @@
            :aligned
            
            :*string-end*
+           :set-armish-string-encoding
 
            :emit-asm))
