@@ -71,7 +71,8 @@
                            (append '(list) (%emit-asm item))))
                  (keyword item)
                  (symbol (escape-assembly-constants item))
-                 (number item)))))
+                 (number item)
+                 (string item)))))
 
 (defmacro emit-asm (&rest instrs)
   `(list
