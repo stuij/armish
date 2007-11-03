@@ -1,7 +1,5 @@
 (in-package :armish)
 
-(defvar *string-end* 0)
-
 (defmacro define-directive (name args &body body)
   "Makes a new instruction function and adds it to the instruction set."
   `(setf (gethash ',name *directives*) (lambda ,args ,@body)))

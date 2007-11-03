@@ -12,7 +12,8 @@
   ((:module :src
             :components
             ((:file "packages")
-             (:file "helpers"               :depends-on ("packages"))
+             (:file "config"                :depends-on ("packages"))
+             (:file "helpers"               :depends-on ("config"))
              (:file "assembler"             :depends-on ("helpers"))
              (:file "arm-instructions"      :depends-on ("assembler"))
              (:file "thumb-instructions"    :depends-on ("assembler"))
