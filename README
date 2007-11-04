@@ -42,17 +42,21 @@ features are welcome. See Liards, for a lib that actually uses it.
 
 ** Installation
 
-To get the latest release, download it from common-lisp.net:
-
-http://common-lisp.net/project/armish/armish-latest.tar.gz
-
 To get the latest development version, do a darcs get:
 
 darcs get http://common-lisp.net/project/armish/darcs/armish
 
-Armish depends on Arnesi, Split-sequence and FiveAM. Once you've got those
-wired into your asdf machinery together with Armish, just fire it up.
+Versioned releases have been put to a halt atm.
 
+Armish depends on Umpa-Lumpa, Arnesi, Split-Sequence and FiveAM.
+
+darcs get http://common-lisp.net/project/liards/darcs/umpa-lumpa
+darcs get http://common-lisp.net/project/bese/repos/arnesi_dev
+darcs get http://common-lisp.net/project/bese/repos/fiveam
+http://ww.telent.net/cclan/split-sequence.tar.gz
+
+Once you've got those wired into your asdf machinery together with Armish,
+just fire it up.
 
 
 ** Testing
