@@ -119,7 +119,9 @@ example usage:
 
 - emit-asm - emits a list of assembly forms ready to be fed to assemble. Emit-asm
 escapes variables which are not part of the assembler syntax, so we can enrich the
-assembler with variables, while still keeping a clean, uniform syntax.
+assembler with variables, while still keeping a clean, uniform syntax. Inside
+emit-asm, escape forms you want to evaluate as Common Lisp with (ea ...), as in
+escape assembler.
 
 syntax: (emit-asm form1 form2 ...)
 
