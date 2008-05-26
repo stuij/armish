@@ -1,5 +1,29 @@
 (in-package :armish)
 
+;; allow macro's in assembly
+;; don't want to take away any of the power of macro's
+(defparameter *asm-macros* '())
+
+(defun add-asm-macro (symbol)
+  (setf *asm-macros* (adjoin symbol *asm-macros*)))
+
+(defun asm-macro-p (symbol)
+  (member symbol *asm-macros*))
+
+(defmacro def-asm-macro-lite (name &body body)
+  `(progn
+     (add-asm-macro ',name)
+     (defmacro ,name ()
+       ',body)))
+
+(defmacro def-asm-macro (name args &body body)
+  `(progn
+     (add-asm-macro ',name)
+     (defmacro ,name ,args
+       ,@body)))
+
+;; syntactic checkers of allowable registers. Gets dirty-fied by the arm asm
+;; convention of post- and prefix symbols
 (defun multi-reg-p-checker (cleaved-regs)
   (loop
      for single-reg in cleaved-regs
