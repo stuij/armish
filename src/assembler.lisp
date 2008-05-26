@@ -89,11 +89,14 @@
           (bind-next-pool)
           this-pool))))
 
-(defun label-address (symbol)
+(defun label-address (keyword)
   "Return the address of a symbol."
-  (if (zerop *pass*)
-      0
-      (gethash symbol *labels*)))
+  (ecase *pass*
+    (0 0)
+    (1 (aif
+        (gethash keyword *labels*)
+        it
+        (error "label ~a not defined" keyword)))))
 
 (defun resolve-symbol (symbol)
   (cond

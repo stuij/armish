@@ -493,9 +493,7 @@ and ONLY a `^', so not a(n) ~a")
 (progn
   (define-arm-instruction b (label)
     (let* ((l-addr (label-address label))
-           (offset (if l-addr
-                       (- l-addr (+ *here* 8))
-                       (error "label :~A in (b :~A) was never defined" label label))))
+           (offset (- l-addr (+ *here* 8))))
       (unless (zerop (logand offset 3))
         (error "when assembling (b :~A), i noticed your instructions aren't four byte aligned" label)) ; 4-byte aligned offset
       (+ (ash #b101 25)
@@ -512,9 +510,7 @@ and ONLY a `^', so not a(n) ~a")
            (+ #x12FFF30
               it))
          (let* ((l-addr (label-address target))
-               (offset (if l-addr
-                           (- l-addr (+ *here* 8))
-                           (error "label :~A in (blx :~A) was never defined" target target))))
+                (offset (- l-addr (+ *here* 8))))
            (assert (zerop (logand offset 3))) ; 4-byte aligned offset
            (+ (ash #b1111101 25)
               (logand (ash offset -2) #xffffff)
@@ -670,8 +666,8 @@ and ONLY a `^', so not a(n) ~a")
 (defmacro create-nop-conditionals (condition code)
   (declare (ignorable code))
   `(define-arm-instruction ,(if condition (concat-symbol 'nop condition) 'nop) ()
-    (big-endian-word-byte-list-to-nr
-     (%assemble (instr-spitter ',(if condition (concat-symbol 'mov condition) 'mov) 'r0 'r0)))))
+     (big-endian-word-byte-list-to-nr
+      (%assemble (instr-spitter ',(if condition (concat-symbol 'mov condition) 'mov) 'r0 'r0)))))
 
 (create-pseudo-cond-loop create-nop-conditionals)
 
