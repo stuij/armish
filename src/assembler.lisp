@@ -20,6 +20,7 @@
 (defvar *pool-position*)                ; position of the current pool
 (defvar *pool-pairs*) ; list of cons who's car is a literary pool and who's cdr is
                                         ; the end address of it's offset
+(defparameter *base-address* 0) ; address used to calculate real memory addresses
 
 ;; setters, getters and checkers
 (defun check-version (lower-limit)
