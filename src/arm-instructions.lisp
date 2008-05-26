@@ -218,28 +218,42 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
      (define-arm-instruction ,name (rd rn-list &optional index/update shifter shiftee)
        (multiple-value-bind (rd rn)
            (e-translate-registers rd ,(if ldr
-                                          '(if (integerp rn-list) 'r15 (car rn-list)) ;; ugliness to handle ldr constant loading 
+                                          '(if (or (integerp rn-list) (symbolp rn-list)) 'r15 (car rn-list)) ;; ugliness to handle ldr constant loading 
                                           '(car rn-list)))
          (+ (ash 1 26) (ash rd 12) (ash rn 16)
             ,(if load '(ash 1 20) 0) ;; otherwise store
             ,(if translation '(ash 1 21) 0)
             ,(if byte-bit '(ash 1 22) 0)
-            (cond (,@( ;; a very crude load constant implementation.
-                      ;; TODO: encode the constant more efficiently if possible in stead of always loading from memory. 
-                      if ldr '((integerp rn-list)
-                               (let ((offset 0)
-                                     (encodee (if (eql index/update :pi)
-                                                  (progn
-                                                    (assert (non-neg-int-range rn-list #xFFFFFFFF))
-                                                    rn-list)
-                                                  (encode-twos-complement rn-list 32))))
-                                 (if (zerop *pass*)
-                                     (unless (member encodee *pool*)
-                                       (push encodee *pool*)) ; add literal to pool
-                                     (incf offset (+ (- (pool-position) (+ *here* 8))
-                                                     (ash (position encodee *pool*) 2)))) ; find pc offset to literal
-                                 (+ (ash 1 24) (l-s-offset offset shifter shiftee))))
-                      '(nil)))
+            (cond ,@(if ldr
+                        ;; a very crude load constant implementation.
+                        ;; TODO: encode the constant more efficiently if possible in stead of always loading from memory. 
+                        '(((integerp rn-list)
+                           (let ((offset 0)
+                                 (encodee (if (eql index/update :pi)
+                                              (progn
+                                                (assert (non-neg-int-range rn-list #xFFFFFFFF))
+                                                rn-list)
+                                              (encode-twos-complement rn-list 32))))
+                             (if (zerop *pass*)
+                                 (unless (member encodee *pool*)
+                                   (push encodee *pool*)) ; add literal to pool
+                                 (incf offset (+ (- (pool-position) (+ *here* 8))
+                                                 (ash (position encodee *pool*) 2)))) ; find pc offset to literal
+                             (+ (ash 1 24) (l-s-offset offset shifter shiftee)))) ;; we put shifter and shiftee here
+                                                                                  ;; and not nil so we can catch typo's
+                           ;; load from label address if the label is close enough from the ldr instruction
+                           ;; otherwise complain, because the penalty for loading first the mem address from a pool
+                           ;; and THEN the val from the address is severe enough in my view to warrent review on the part
+                           ;; of the coder. But practice will show if this is either a feature or an annoyance.
+                           ((symbolp rn-list)
+                            (if (zerop *pass*)
+                                0 ;; if pass is 0 we don't care about the proper encoding of ldr, and often we can't
+                                (let ((offset (- (label-address rn-list)
+                                                 (+ *here* 8))))
+                                  (assert (non-neg-int-range (abs offset) #xFFF) () "label ~a is out of reach of ldr fetch (+- 4095 decimal)" rn-list)
+                                  (+ (ash 1 24)
+                                     (l-s-offset offset shifter shiftee))))))
+                        '((nil)))
                   ;; pre-indexed
                   ((eql index/update '!)
                    ,(if translation
