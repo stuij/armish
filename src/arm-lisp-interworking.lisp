@@ -77,9 +77,8 @@
                                          symbol
                                          #'identity
                                          #'identity)))))))
-
-
-
+      
+;; emit assembly
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun escape-assembly-constants (symbol)
     (if (any-or-mr-reg-p symbol)
@@ -90,22 +89,57 @@
   (defun %emit-asm (instrs)
     (loop for item in instrs
        collect (etypecase item
-                 (cons (if (eql (intern (format nil "~A" (car item)) 'armish) 'ea)
-                           (cadr item)
+                 (cons (if (special-syntactic-asm-form-p item)
+                           (handle-special-syntactic-asm-form item)
                            (append '(list) (%emit-asm item))))
                  (keyword item)
                  (symbol (escape-assembly-constants item))
                  (number item)
                  (string item)))))
 
-(defmacro emit-asm (&rest instrs)
-  `(list
-    ,@(loop for expr in instrs
-         collect (etypecase expr
-                   (cons (if (eql (intern (format nil "~A" (car expr)) 'armish) 'ea)
-                             (cadr expr)
-                             (append (list 'list `',(car expr)) 
-                                     (if (cdr expr) (%emit-asm (cdr expr))))))
-                   (keyword expr)
-                   (symbol `',expr)
-                   (string expr)))))
+(defmacro emit-asm (&rest pre-macro-rem-instrs)
+  (let ((instrs (apply #'append (loop for thing in pre-macro-rem-instrs
+                                   collect (typecase thing
+                                             (cons (if (asm-macro-p (car thing))
+                                                       (macroexpand thing)
+                                                       (list thing)))
+                                             (symbol (if (asm-macro-p thing)
+                                                         (macroexpand (list thing))
+                                                         (list thing)))
+                                             (t (list thing)))))))
+    `(list
+      ,@(loop for expr in instrs
+           collect (etypecase expr
+                     (cons (if (special-syntactic-asm-form-p expr)
+                               (handle-special-syntactic-asm-form expr)
+                               (append (list 'list `',(car expr)) 
+                                       (if (cdr expr) (%emit-asm (cdr expr))))))
+                     (keyword expr)
+                     (symbol `',expr)
+                     (string expr))))))
+
+(defun handle-special-syntactic-asm-form (form)
+  (let ((internal-form-name (intern (symbol-name (car form)) 'armish)))
+    ;; these forms are handled a bit naively. change this function and
+    ;; the emit-asm clan to mangle their outcome recursively through emit-asm again
+    (if (directive-form-p form)
+        `(quote ,form) ;; much to simplistic this
+        (ecase internal-form-name
+          (ea
+           (cadr form))
+          (ia
+           `(quote ,(cadr form)))
+          (address
+           `(quote ,form))
+          (otherwise
+           (error "don't know how to handle special syntactic asm form ~a" form))))))
+
+(defun special-syntactic-asm-form-p (form)
+  (let ((internal-form (intern (symbol-name (car form)) 'armish)))
+    (if (directive-form-p form)
+        t
+        (case internal-form
+          ((ea ia address)
+           t)
+          (otherwise
+           nil)))))
