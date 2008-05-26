@@ -6,6 +6,8 @@
   "Thumb instruction set")
 (defvar *directives* (make-hash-table)
   "assembler directives")
+(defvar *directive-symbols* (make-hash-table)
+  "directive symbols")
 
 (defvar *pass*)                         ; current pass (0 or 1)
 (defvar *here*)                         ; offset address
@@ -13,6 +15,7 @@
 (defvar *mode*)                         ; arm or thumb
 (defvar *labels*)                       ; local assembly labels
 (defvar *version*)                     ; processor capabilities and enhancements
+(defvar *asm-params*)                   ; parameters for use in assembeler
 (defvar *pool*)                         ; current active literal pool
 (defvar *pool-position*)                ; position of the current pool
 (defvar *pool-pairs*) ; list of cons who's car is a literary pool and who's cdr is
@@ -93,16 +96,17 @@
       (gethash symbol *labels*)))
 
 (defun resolve-symbol (symbol)
-  (case symbol
-    (code32 (progn (set-mode *arm*)
-                   (align-assembled)))
-    (code16 (progn (set-mode *thumb*)
-                   (align-assembled 2)))
-    (align    (align-assembled))
-    (align-hw (align-assembled 2))
-    (pool     (dump-pool))
-    (otherwise (if (= *pass* 0)
-                   (setf (gethash symbol *labels*) *here*)))))
+  (cond
+    ((keywordp symbol)
+     (if (= *pass* 0)
+         (setf (gethash symbol *labels*) *here*)))
+    ((directive-symbol-p symbol)
+     (exec-directive-symbol symbol))
+    ((asm-param-p symbol)
+     (assemble-thing-pass-1-or-2 (get-asm-param symbol)))
+    (t
+     (error "to be assembled top level symbol ~a is neither a keyword, a directive, nor is it an assembler symbol"
+            symbol))))
 
 (defun assemble-form (form)
   "Looks up an instruction in the instruction set and assembles with arguments."
@@ -116,17 +120,65 @@
             (apply it (rest form))
             (error "mnemonic ~A from form ~A not recognized" (first form) form))))
 
+(defun special-var-escaping-form-p (form)
+  (case (car form)
+    ((address set-asm-param def-asm-param)
+     t)
+    (otherwise
+     nil)))
+
+(defun handle-special-var-escaping (form)
+  (case (car form)
+    ((set-asm-param def-asm-param)
+     (let ((val (third form)))
+       (setf (third form) (unvar-form val))
+       form))
+    (address
+     (get-hw-label-address (cadr form)))))
+
+(defun unvar-form (form)
+  "replace vars by their vals"
+  (typecase form
+    (symbol
+     (aif (get-asm-param form)
+          it
+          form))
+    (list
+     (if (special-var-escaping-form-p form)
+         (handle-special-var-escaping form)
+         (loop for item in form
+            collect (unvar-form item))))
+    (otherwise
+     form)))
+
+(defun assemble-thing-pass-1-or-2 (var-ridden-form)
+  (let ((form (unvar-form var-ridden-form)))
+    (case *pass*
+      (0 (cond ((symbolp form)
+                (resolve-symbol form))
+               ((listp form)
+                (let ((assembled (assemble-form form)))
+                  (if assembled ;; some forms just produce side-effect
+                      (incf *here* (length assembled)))))
+               ((stringp form)
+                (incf *here* (length (append (reform-string form) '(0)))))))
+      (1 (cond ((symbolp form)
+                (resolve-symbol form))
+               ((listp form)
+                (let ((opcode (assemble-form form)))
+                  (incf *here* (length opcode))
+                  opcode))
+               ((stringp form)
+                (let ((string-code (append (reform-string form) '(0))))
+                  (incf *here* (length string-code))
+                  string-code)))))))
+
 (defun pass-1 (forms)
   "First pass assembler to collect all label addresses."
   (let ((*pass* 0)
         (*here* 0))
     (dolist (form forms *here*)
-      (cond ((symbolp form)
-             (resolve-symbol form))
-            ((listp form)
-             (incf *here* (length (assemble-form form))))
-            ((stringp form)
-             (incf *here* (length (append (reform-string form) '(0)))))))
+      (assemble-thing-pass-1-or-2 form))
     (dump-pool)))
 
 (defun pass-2 (forms)
@@ -134,17 +186,7 @@
   (let ((*pass* 1)
         (*here* 0))
     (loop for form in forms append
-         (cond
-           ((symbolp form)
-            (resolve-symbol form))
-           ((listp form)
-            (let ((opcode (assemble-form form)))
-              (incf *here* (length opcode))
-              opcode))
-           ((stringp form)
-            (let ((string-code (append (reform-string form) '(0))))
-              (incf *here* (length string-code))
-              string-code))))))
+         (assemble-thing-pass-1-or-2 form))))
 
 (defun clean-form (form)
   (cond
@@ -166,6 +208,7 @@
            ;; setup initial specials
            
            (*labels* (make-hash-table))
+           (*asm-params* (make-hash-table))
            (*pool* '())
            (*pool-position* 0)
            (*pool-pairs* '())
@@ -177,7 +220,8 @@
            (*mode* mode-tmp)
            (*pool-pairs* (nreverse *pool-pairs*)))
       (bind-next-pool)
-      (align (pass-2 pure-forms)))))
+      (let ((*asm-params* (make-hash-table)))
+        (align (pass-2 pure-forms))))))
 
 (defun assemble (chip mode forms)
   (%assemble forms :chip chip :mode mode))
