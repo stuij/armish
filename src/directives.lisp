@@ -4,6 +4,12 @@
   "Makes a new instruction function and adds it to the instruction set."
   `(setf (gethash ',name *directives*) (lambda ,args ,@body)))
 
+(defmacro define-se-directive (name args &body body)
+  "define a directive which is meant just for side-effects. Will always return nil"
+  `(define-directive ,name ,args
+     ,@body
+     nil))
+
 (defun process-bytes (bytes bit-size)
   (assert bytes)
   (let ((8-bit-bytes (loop for nr in bytes
@@ -62,3 +68,57 @@
 
 (define-directive align (&optional bytes)
   (align-assembled bytes))
+
+(define-se-directive def-asm-param (name init-val)
+  (if (gethash name *asm-params*)
+      (error "asm parameter ~a has already been defined" name)
+      (setf (gethash name *asm-params*) init-val)))
+
+(define-se-directive set-asm-param (name new-val)
+  (if (gethash name *asm-params*)
+      (setf (gethash name *asm-params*) new-val)
+      (error "asm parameter ~a hasn't been defined" name)))
+
+(defun call-directive (name &rest params)
+  (apply (gethash name *directives*) params))
+
+(defun get-hw-label-address (label)
+  (+ *base-address* (label-address label)))
+
+(defun get-asm-param (name)
+  (gethash name *asm-params*))
+
+(defun asm-param-p (name)
+  (get-asm-param name))
+
+(defun directive-form-p (form)
+  (gethash (intern (symbol-name (car form)) :armish) *directives*))
+
+;; directive symbols
+(defmacro add-directive-symbol (name &body forms)
+  `(setf (gethash ',name *directive-symbols*)
+         (lambda ()
+           ,@forms)))
+
+(defun directive-symbol-p (symbol)
+  (gethash symbol *directive-symbols*))
+
+(defun exec-directive-symbol (symbol)
+  (funcall (gethash symbol *directive-symbols*)))
+
+(add-directive-symbol code32
+  (set-mode *arm*)
+  (align-assembled))
+
+(add-directive-symbol code16
+  (set-mode *thumb*)
+  (align-assembled 2))
+
+(add-directive-symbol align
+  (align-assembled))
+
+(add-directive-symbol align-hw
+  (align-assembled 2))
+
+(add-directive-symbol pool
+  (dump-pool))
