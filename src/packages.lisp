@@ -14,4 +14,11 @@
            :*string-end*
            :set-armish-string-encoding
 
-           :emit-asm))
+           :emit-asm
+
+           :def-asm-macro
+           :def-asm-macro-lite
+           :add-asm-macro
+           :asm-macro-p
+
+           :*base-address*))

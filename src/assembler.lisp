@@ -59,7 +59,6 @@
     (otherwise (error "feature ~a not supported" feature))))
 
 ;; the meat of the assembler; it's a bit skinny if you ask me
-
 (defun align-assembled (&optional bytes)
   (let ((aligned (aligned *here* bytes))
         (here-tmp *here*))
