@@ -212,52 +212,58 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
          (+ (ash 1 25)
             (process-l-s-index-reg index)))))
 
-(defmacro create-l-s-w-b (name &key byte-bit translation load suffix ldr)
+(defmacro create-l-s-w-b (name &key byte-bit translation load suffix pseudo)
   `(progn
-     (define-arm-instruction ,name (rd rn-list &optional index/update shifter shiftee)
+     (define-arm-instruction ,name (rd rn-thing &optional index/update shifter shiftee)
        (multiple-value-bind (rd rn)
-           (e-translate-registers rd ,(if ldr
-                                          '(if (or (integerp rn-list) (symbolp rn-list)) 'r15 (car rn-list)) ;; ugliness to handle ldr constant loading 
-                                          '(car rn-list)))
+           (e-translate-registers rd ,(cond
+                                       ((eql pseudo 'ldr)
+                                        '(if (or (integerp rn-thing) (keywordp rn-thing)) 'r15 (car rn-thing))) ;; ugliness to handle ldr constant loading 
+                                       ((eql pseudo 'str)
+                                        '(if (keywordp rn-thing) 'r15 (car rn-thing)))
+                                       (t '(car rn-thing))))
          (+ (ash 1 26) (ash rd 12) (ash rn 16)
             ,(if load '(ash 1 20) 0) ;; otherwise store
             ,(if translation '(ash 1 21) 0)
             ,(if byte-bit '(ash 1 22) 0)
-            (cond ,@(if ldr
-                        ;; a very crude load constant implementation.
-                        ;; TODO: encode the constant more efficiently if possible in stead of always loading from memory. 
-                        '(((integerp rn-list)
-                           (let ((offset 0)
-                                 (encodee (if (eql index/update :pi)
-                                              (progn
-                                                (assert (non-neg-int-range rn-list #xFFFFFFFF))
-                                                rn-list)
-                                              (encode-twos-complement rn-list 32))))
-                             (if (zerop *pass*)
-                                 (unless (member encodee *pool*)
-                                   (push encodee *pool*)) ; add literal to pool
-                                 (incf offset (+ (- (pool-position) (+ *here* 8))
-                                                 (ash (position encodee *pool*) 2)))) ; find pc offset to literal
-                             (+ (ash 1 24) (l-s-offset offset shifter shiftee)))) ;; we put shifter and shiftee here
-                                                                                  ;; and not nil so we can catch typo's
-                           ;; load from label address if the label is close enough from the ldr instruction
-                           ;; otherwise complain, because the penalty for loading first the mem address from a pool
-                           ;; and THEN the val from the address is severe enough in my view to warrent review on the part
-                           ;; of the coder. But practice will show if this is either a feature or an annoyance.
-                           ((symbolp rn-list)
-                            (if (zerop *pass*)
-                                0 ;; if pass is 0 we don't care about the proper encoding of ldr, and often we can't
-                                (let ((offset (- (label-address rn-list)
-                                                 (+ *here* 8))))
-                                  (assert (non-neg-int-range (abs offset) #xFFF) () "label ~a is out of reach of ldr fetch (+- 4095 decimal)" rn-list)
-                                  (+ (ash 1 24)
-                                     (l-s-offset offset shifter shiftee))))))
-                        '((nil)))
+            (cond ,@(case pseudo
+                          ;; a very crude load constant implementation.
+                          ;; TODO: encode the constant more efficiently if possible in stead of always loading from memory.
+                          ((str ldr)
+                           `(,(if (eql pseudo 'ldr)
+                                  '((integerp rn-thing)
+                                    (let ((offset 0)
+                                          (encodee (if (eql index/update :pi)
+                                                       (progn
+                                                         (assert (non-neg-int-range rn-thing #xFFFFFFFF))
+                                                         rn-thing)
+                                                       (encode-twos-complement rn-thing 32))))
+                                      (if (zerop *pass*)
+                                          (unless (member encodee *pool*)
+                                            (push encodee *pool*)) ; add literal to pool
+                                          (incf offset (+ (- (pool-position) (+ *here* 8))
+                                                          (ash (position encodee *pool*) 2)))) ; find pc offset to literal
+                                      (+ (ash 1 24) (l-s-offset offset shifter shiftee))))
+                                  '(nil)) ;; we put shifter and shiftee here
+                              ;; and not nil so we can catch typo's
+                              ;; load from label address if the label is close enough from the ldr instruction
+                              ;; otherwise complain, because the penalty for loading first the mem address from a pool
+                              ;; and THEN the val from the address is severe enough in my view to warrent review on the part
+                              ;; of the coder. But practice will show if this is either a feature or an annoyance.
+                              ((symbolp rn-thing)
+                               (if (zerop *pass*)
+                                   0 ;; if pass is 0 we don't care about the proper encoding of ldr, and often we can't
+                                   (let ((offset (- (label-address rn-thing)
+                                                    (+ *here* 8))))
+                                     (assert (non-neg-int-range (abs offset) #xFFF) () "label ~a is out of reach of ldr fetch (+- 4095 decimal)" rn-thing)
+                                     (+ (ash 1 24)
+                                        (l-s-offset offset shifter shiftee)))))))
+                          (otherwise '((nil))))
                   ;; pre-indexed
                   ((eql index/update '!)
                    ,(if translation
                         '(error "you can only use postindexing with translation load/store instructions, so no pre-indexing")
-                        '(+ (l-s-offset (cadr rn-list) (caddr rn-list) (cadddr rn-list))
+                        '(+ (l-s-offset (cadr rn-thing) (caddr rn-thing) (cadddr rn-thing))
                           (ash 1 24) (ash 1 21))))
                   ;; post-indexed
                   (index/update
@@ -266,18 +272,18 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
                   (t                   
                    ,(if translation
                         '(error "you can only use postindexing with translation load/store instructions, so no offset indexing")
-                        '(+ (if (cadr rn-list) (l-s-offset (cadr rn-list) (caddr rn-list) (cadddr rn-list)) 0)
+                        '(+ (if (cadr rn-thing) (l-s-offset (cadr rn-thing) (caddr rn-thing) (cadddr rn-thing)) 0)
                           (ash 1 24))))))))
      ,(if suffix
           `(make-and-install-condition-fns ',name :suffix ',suffix)
           `(make-and-install-condition-fns ',name))))
 
-(create-l-s-w-b ldr :load t :ldr t)
+(create-l-s-w-b ldr :load t :pseudo ldr)
 (create-l-s-w-b ldrb :suffix b :byte-bit t :load t)
 (create-l-s-w-b ldrbt :suffix bt :byte-bit t :translation t :load t)
 (create-l-s-w-b ldrt :suffix t :translation t :load t)
 
-(create-l-s-w-b str)
+(create-l-s-w-b str :pseudo str)
 (create-l-s-w-b strb :suffix b :byte-bit t)
 (create-l-s-w-b strbt :suffix bt :byte-bit t :translation t)
 (create-l-s-w-b strt :suffix t :translation t)
