@@ -1,6 +1,6 @@
 (in-package :armish)
 
-;;{{{ general functions/macro's/parameters
+;; general functions/macro's/parameters
 
 (defmacro define-arm-instruction (name args &body body)
   "Makes a new arm instruction function and adds it to the instruction set."
@@ -83,10 +83,10 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
 (defmacro creator-loop (creator-name instr-alist)
   `(progn ,@(creator-helper creator-name instr-alist)))
 
-;;}}}
-;;{{{ instructions
 
-;;{{{ instructions: addressing mode 1 - data processing operands
+;; instructions
+
+;; instructions: addressing mode 1 - data processing operands
 
 (defun dp-immediate (imm)
   (multiple-value-bind (base_imm rot_imm)
@@ -168,8 +168,7 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
 (creator-loop create-moving-dp-instruction ((mov . #b1101) (mvn . #b1111)))
 (creator-loop create-comparing-dp-instruction ((cmn . #b1011) (cmp . #b1010) (teq . #b1001) (tst . #b1000)))
 
-;;}}}
-;;{{{ instructions: addressing mode 2 - load and store word or unsigned byte
+;; instructions: addressing mode 2 - load and store word or unsigned byte
 
 (defun process-arbitrary-l-s-shiftee (shiftee)
   (assert (and (positive-integer-p shiftee) (<= shiftee 32)))
@@ -283,8 +282,7 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
 (create-l-s-w-b strbt :suffix bt :byte-bit t :translation t)
 (create-l-s-w-b strt :suffix t :translation t)
 
-;;}}}
-;;{{{ instructions: addressing mode 3 - miscellaneous loads and stores
+;; instructions: addressing mode 3 - miscellaneous loads and stores
 
 (defun misc-l-s-offset (offset)
   (cond ((integerp offset)
@@ -330,8 +328,7 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
 (create-misc-l-s strh :suffix h :h t)
 (create-misc-l-s strd :suffix d :s t :h t :dsp t)
 
-;;}}}
-;;{{{ instructions: addressing mode 4 - load and store multiple
+;; instructions: addressing mode 4 - load and store multiple
 
 (defun reg-to-bit (reg-val)
   (ash 1 reg-val))
@@ -417,8 +414,7 @@ and ONLY a `^', so not a(n) ~a")
 
 (iterate-l-s-multiple-addr-modes stm ((ia ea #x800000) (ib fa #x1800000) (da ed 0) (db fd #x1000000)))
 
-;;}}}
-;;{{{ instructions: addressing mode 5 - load and store coprocessor
+;; instructions: addressing mode 5 - load and store coprocessor
 
 (defun translate-coproc (coproc)
   "Translate coproc value into a value that fits in the appropriate bits in the load/store coproc opcode. 
@@ -485,10 +481,9 @@ and ONLY a `^', so not a(n) ~a")
 (create-l-s-coprocessor stc)
 (create-l-s-coprocessor stc2 :two t)
 
-;;}}}
-;;{{{ instructions: miscellaneous
+;; instructions: miscellaneous
 
-;;{{{ instructions: miscellaneous: branch instructions
+;; instructions: miscellaneous: branch instructions
 
 (progn
   (define-arm-instruction b (label)
@@ -524,8 +519,7 @@ and ONLY a `^', so not a(n) ~a")
       (+ #x12FFF10 rm)))
   (make-and-install-condition-fns 'bx))
 
-;;}}}
-;;{{{ instructions: miscellaneous: coprocessor instructions
+;; instructions: miscellaneous: coprocessor instructions
 
 (defmacro create-cdp (name &key two)
   `(progn
@@ -561,8 +555,7 @@ and ONLY a `^', so not a(n) ~a")
 (create-move-coprocessor mrc :bit-20 t)
 (create-move-coprocessor mrc2 :bit-20 t :two t)
 
-;;}}}
-;;{{{ instructions: miscellaneous: status register instructions
+;; instructions: miscellaneous: status register instructions
 
 ;; mrs
 (progn
@@ -607,8 +600,7 @@ and ONLY a `^', so not a(n) ~a")
              (t (error "second argument ~a is neither a symbol or a positive integer" value)))))
   (make-and-install-condition-fns 'msr))
 
-;;}}}
-;;{{{ instructions: miscellaneous: multiply instructions
+;; instructions: miscellaneous: multiply instructions
 
 ;; mul
 (progn
@@ -637,8 +629,7 @@ and ONLY a `^', so not a(n) ~a")
 (create-multiply-instruction umlal #b101)
 (create-multiply-instruction umull #b100)
 
-;;}}}
-;;{{{ instructions: miscellaneous: pseudo-instructions
+;; instructions: miscellaneous: pseudo-instructions
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun instr-spitter (&rest args)
@@ -671,8 +662,7 @@ and ONLY a `^', so not a(n) ~a")
 
 (create-pseudo-cond-loop create-nop-conditionals)
 
-;;}}}
-;;{{{ instructions: miscellaneous: miscellaneous miscellaneous instructions
+;; instructions: miscellaneous: miscellaneous miscellaneous instructions
 
 ;; bkpt
 (define-arm-instruction bkpt (immediate)
@@ -705,9 +695,3 @@ and ONLY a `^', so not a(n) ~a")
         (e-translate-registers rd rm (car rn))
       (+ (ash 1 24) (ash #b1001 4) (ash rd 12) rm (ash rn 16))))
   (do-conds-and-enhance-plus-conds 'swp 'b (ash #b1 22)))
-
-;;}}}
-
-;;}}}
-
-;;}}}
