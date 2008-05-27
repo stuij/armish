@@ -94,6 +94,7 @@
                            (append '(list) (%emit-asm item))))
                  (keyword item)
                  (symbol (escape-assembly-constants item))
+                 (character (aref (string-to-octets (format nil "~a" item) *string-encoding*) 0))
                  (number item)
                  (string item)))))
 
