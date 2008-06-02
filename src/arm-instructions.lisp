@@ -239,10 +239,19 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
                                                          rn-thing)
                                                        (encode-twos-complement rn-thing 32))))
                                       (if (zerop *pass*)
-                                          (unless (member encodee *pool*)
-                                            (push encodee *pool*)) ; add literal to pool
-                                          (incf offset (+ (- (pool-position) (+ *here* 8))
-                                                          (ash (position encodee *pool*) 2)))) ; find pc offset to literal
+                                          (unless (and (not (= -1 rn-thing)) (member encodee *pool*))
+                                            (if (= -1 rn-thing)                         ; add literal to pool
+                                                (push rn-thing *pool*)
+                                                (push encodee *pool*)))
+                                          (let ((encodee-position (aif (position encodee *pool*)
+                                                                        it
+                                                                        (aif (position -1 *pool*)
+                                                                          (progn
+                                                                            (setf (nth it *pool*) encodee)
+                                                                            it)
+                                                                          (error "expected ldr/str address placeholder in pool ~a" *pool*)))))
+                                            (incf offset (+ (- (pool-position) (+ *here* 8))
+                                                            (ash encodee-position 2))))) ; find pc offset to literal
                                       (+ (ash 1 24) (l-s-offset offset shifter shiftee))))
                                   '(nil)) ;; we put shifter and shiftee here
                               ;; and not nil so we can catch typo's
