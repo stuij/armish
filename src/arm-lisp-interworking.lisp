@@ -1,5 +1,70 @@
 (in-package :armish)
 
+;; asm spaces
+(defparameter *asm-spaces* (make-hash-table))
+(defparameter *current-asm-space* nil)
+(defparameter *current-asm-block* nil)
+
+(def-space-n-blocks armish-user
+  user-block)
+
+(in-asm-space armish-user)
+(in-block user-block)
+
+(defclass asm-space ()
+  ((blocks :accessor blocks-of :initform (make-hash-table) :initarg :blocks)))
+
+(defclass asm-block ()
+  ((base-address :accessor base-address-of :initform 0 :initarg :base-address)
+   (fns :accessor fns-of :initform (make-hash-table) :initarg :fns)
+   (labels :accessor labels-of :initform (make-hash-table) :initarg :labels)))
+
+(defun clear-current-block ()
+    (clrhash (fns-of *current-asm-block*)))
+
+(defun %def-asm-space (name)
+  (setf (gethash name *asm-spaces*) (make-instance 'asm-space)))
+
+(defmacro def-asm-space (name)
+  `(%def-asm-space ',name))
+
+(defun get-asm-space (name)
+  (gethash name *asm-spaces*))
+
+(defun %in-asm-space (name)
+  (setf *current-asm-space* (get-asm-space name)))
+
+(defmacro in-asm-space (name)
+  `(%in-asm-space ',name))
+
+(defun %def-block (name &key in (base-address 0))
+  (setf (gethash name (blocks-of (%get-asm-space in)))
+        (make-instance 'asm-block
+                       :base-address base-address)))
+
+(defmacro def-block (name &key in (base-address 0))
+  `(%def-block ',name :in ',in :base-address ,base-address))
+
+(defun get-block (name &key in)
+  (let ((asm-space (if in
+                       in
+                       *current-asm-space*)))
+    (gethash name (blocks-of asm-space))))
+
+(defun %in-block (name &key in)
+  (setf *current-asm-block* (get-block name :in in)))
+
+(defmacro in-block (name &key in)
+  `(%in-block ',name :in ,in))
+
+(defmacro def-space-n-blocks (space-name &body block-specs)
+  `(progn
+     (def-asm-space ,space-name)
+     ,@(loop for spec in block-specs
+            collect (if (symbolp spec)
+                        `(def-block ,spec :in ,space-name)
+                        `,(append '(def-block) (list (car spec)) (cdr spec) `(:in ,space-name))))))
+
 ;; allow macro's in assembly
 ;; don't want to take away any of the power of macro's
 (defparameter *asm-macros* '())
