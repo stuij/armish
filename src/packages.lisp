@@ -7,18 +7,38 @@
         :split-sequence
         :it.bese.fiveam)
   (:shadowing-import-from :it.bese.arnesi :partition)
-  (:export :assemble
-           :align
-           :aligned
-           
-           :*string-end*
-           :set-armish-string-encoding
+  (:export
+   ;; assembler
+   :assemble
 
-           :emit-asm
+   ;; config
+   :*string-end*
+   :set-armish-string-encoding
 
-           :def-asm-macro
-           :def-asm-macro-lite
-           :add-asm-macro
-           :asm-macro-p
+   ;; arm-lisp interworking
+   :emit-asm
 
-           :*base-address*))
+   :def-asm-space
+   :in-asm-space
+   :def-block
+   :in-block
+   :def-space-n-blocks
+   :clear-current-block
+
+   :def-asm-macro
+   :def-asm-macro-lite
+   :add-asm-macro
+   :asm-macro-p
+
+   :gather-code
+   :gather
+   :emit
+   :def-arm
+   :emit-arm-fns
+   :def-asm-fn-raw
+   :def-asm-fn
+   :set-asm-init-fn
+   :set-asm-init-routines
+
+
+   :*base-address*))
