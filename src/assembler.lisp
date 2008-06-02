@@ -133,9 +133,10 @@
 (defun handle-special-var-escaping (form)
   (case (car form)
     ((set-asm-param def-asm-param)
-     (let ((val (third form)))
-       (setf (third form) (unvar-form val))
-       form))
+     (let ((val (third form))
+           (tmp-form (copy-tree form)))
+       (setf (third tmp-form) (unvar-form val))
+       tmp-form))
     (address
      (get-hw-label-address (cadr form)))))
 
