@@ -234,7 +234,7 @@
     ;; these forms are handled a bit naively. change this function and
     ;; the emit-asm clan to mangle their outcome recursively through emit-asm again
     (if (directive-form-p form)
-        `(quote ,form) ;; much to simplistic this
+        (handle-directive-form form)
         (ecase internal-form-name
           (ea
            (cadr form))

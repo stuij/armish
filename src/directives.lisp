@@ -96,6 +96,13 @@
 (defun directive-form-p (form)
   (gethash (intern (symbol-name (car form)) :armish) *directives*))
 
+(defun handle-directive-form (form)
+  (case (intern (symbol-name (car form)) :armish)
+    ((binae bin dword quad word dcd hword dcw byte dcb)
+     `(list ',(car form) ,@(%emit-asm (cdr form))))
+    (otherwise
+     `(quote ,form))))
+
 ;; directive symbols
 (defmacro add-directive-symbol (name &body forms)
   `(setf (gethash ',name *directive-symbols*)
