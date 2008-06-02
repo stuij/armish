@@ -259,7 +259,7 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
                               ;; otherwise complain, because the penalty for loading first the mem address from a pool
                               ;; and THEN the val from the address is severe enough in my view to warrent review on the part
                               ;; of the coder. But practice will show if this is either a feature or an annoyance.
-                              ((symbolp rn-thing)
+                              ((keywordp rn-thing)
                                (if (zerop *pass*)
                                    0 ;; if pass is 0 we don't care about the proper encoding of ldr, and often we can't
                                    (let ((offset (- (label-address rn-thing)
