@@ -83,7 +83,9 @@
   (apply (gethash name *directives*) params))
 
 (defun get-hw-label-address (label)
-  (+ *base-address* (label-address label)))
+  (ecase *pass*
+    (0 -1)
+    (1 (+ *base-address* (label-address label)))))
 
 (defun get-asm-param (name)
   (gethash name *asm-params*))
