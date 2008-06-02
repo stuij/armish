@@ -22,6 +22,51 @@
      (defmacro ,name ,args
        ,@body)))
 
+;; assembly snippets gathering machinery
+(defun gather-code (&rest args)
+  (gather args))
+
+(defun gather (&rest instr-lists)
+  (apply #'append instr-lists))
+
+(defun emit (&rest atoms)
+  (remove 'nil atoms))
+
+(defmacro set-asm-init-routines (&body forms)
+  `(set-asm-init-fn (lambda ()
+                      ,@forms)))
+
+(defmacro def-asm (name args &rest body)
+  "fn that outputs arm code"
+  `(defun ,name ,args
+     (emit-asm ,@body)))
+
+(let ((init-fn (lambda ()
+                 (warn "no init-fn defined"))))
+
+  (defun set-asm-init-fn (fn)
+    (setf init-fn fn))
+  
+  (defun emit-init-fn ()
+    (funcall init-fn)))
+
+(defun emit-arm-fns (&optional (asm-block *current-asm-block*))
+  (append (emit-init-fn)
+          (loop for init being the hash-value in (fns-of asm-block)
+             append (funcall init))))
+
+(defmacro def-asm-fn-raw (name args &body body)
+  `(setf (gethash ',name (fns-of *current-asm-block*))
+         (lambda ,args
+           ,@body)))
+
+(defmacro def-asm-fn (name &body body)
+  `(setf (gethash ',name (fns-of *current-asm-block*))
+         (lambda ()
+           (emit-asm
+            ,(intern  (symbol-name name) :keyword)
+            ,@body))))
+
 ;; syntactic checkers of allowable registers. Gets dirty-fied by the arm asm
 ;; convention of post- and prefix symbols
 (defun multi-reg-p-checker (cleaved-regs)
