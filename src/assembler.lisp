@@ -1,5 +1,5 @@
 (in-package :armish)
-
+ 
 (defvar *arm* (make-hash-table)
   "Arm instruction set")
 (defvar *thumb* (make-hash-table) 

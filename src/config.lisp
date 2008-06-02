@@ -6,3 +6,4 @@
 
 (defun set-armish-string-encoding (encoding)
   (setf *string-encoding* encoding))
+
