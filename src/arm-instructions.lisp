@@ -126,7 +126,9 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
 
 (defun process-shifter-operand (rm shifter-operand to-be-shifted)
   (if (integerp rm)
-      (dp-immediate rm)
+      (progn
+        (assert (and (null shifter-operand) (null to-be-shifted)))
+        (dp-immediate rm))
       (+ (e-translate-register rm)
          (cond
            ((keywordp shifter-operand) (process-dp-shifter-pair shifter-operand to-be-shifted))
