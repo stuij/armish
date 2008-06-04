@@ -625,7 +625,10 @@ and ONLY a `^', so not a(n) ~a")
     (multiple-value-bind (rd rm rs)
         (e-translate-registers rd rm rs)
       (assert (and (not (= 15 rd)) (not (= 15 rm)) (not (= 15 rs))))
-      (assert (and (not (= rd rm))))
+      ;; (assert (and (not (= rd rm))))
+      ;; above restriction is mentioned in the arm spec for arm5 and below
+      ;; it is however also mentioned that probably non of the known
+      ;; implementations would be affected by ignoring this restriction
       (+ (ash #b1001 4) (ash rd 16) (ash rs 8) rm)))
   (do-conds-and-enhance-plus-conds 'mul 's (ash #b1 20)))
 
