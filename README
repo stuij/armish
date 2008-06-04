@@ -228,13 +228,13 @@ byte-size - bin-list lists. For example assembling
 bytes, all of value fill
 
 "string" - a literal string will be encoded as *string-encoding* (defaults to :utf-8)
-specified transformed bytes, at arnesi's string-to-octets discretion and will be
-*string-end* (defaults to 0) terminated 
+specified transformed bytes, at arnesi's string-to-octets discretion. No auto-align.
 
 (string &rest strings) - strings will be concatenated and then encoded as
 *string-encoding* (defaults to :utf-8) transformed bytes, at arnesi's
 string-to-octets discretion. If the symbol :null-terminated is present,
-the concatenated (so NOT the individual) strings will be null-terminated.
+the concatenated (so NOT the individual) strings will be *string-end* (defaults to 0)
+terminated. Next code won't be automatically aligned.
 
 :label - an unadulterated keyword will be treated as a label
 

@@ -165,7 +165,7 @@
                   (if assembled ;; some forms just produce side-effect
                       (incf *here* (length assembled)))))
                ((stringp form)
-                (incf *here* (length (append (reform-string form) '(0)))))))
+                (incf *here* (length (reform-string form))))))
       (1 (cond ((symbolp form)
                 (resolve-symbol form))
                ((listp form)
@@ -173,7 +173,7 @@
                   (incf *here* (length opcode))
                   opcode))
                ((stringp form)
-                (let ((string-code (append (reform-string form) '(0))))
+                (let ((string-code (reform-string form)))
                   (incf *here* (length string-code))
                   string-code)))))))
 
