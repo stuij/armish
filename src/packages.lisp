@@ -35,6 +35,7 @@
    :emit-arm-fns
    :def-asm-fn-raw
    :def-asm-fn
+   :def-asm
    :set-asm-init-routines
    :set-asm-final-routines
 
