@@ -5,12 +5,6 @@
 (defparameter *current-asm-space* nil)
 (defparameter *current-asm-block* nil)
 
-(def-space-n-blocks armish-user
-  user-block)
-
-(in-asm-space armish-user)
-(in-block user-block)
-
 (defclass asm-space ()
   ((blocks :accessor blocks-of :initform (make-hash-table) :initarg :blocks)))
 
@@ -20,7 +14,7 @@
    (labels :accessor labels-of :initform (make-hash-table) :initarg :labels)))
 
 (defun clear-current-block ()
-    (clrhash (fns-of *current-asm-block*)))
+  (clrhash (fns-of *current-asm-block*)))
 
 (defun %def-asm-space (name)
   (setf (gethash name *asm-spaces*) (make-instance 'asm-space)))
@@ -38,7 +32,7 @@
   `(%in-asm-space ',name))
 
 (defun %def-block (name &key in (base-address 0))
-  (setf (gethash name (blocks-of (%get-asm-space in)))
+  (setf (gethash name (blocks-of (get-asm-space in)))
         (make-instance 'asm-block
                        :base-address base-address)))
 
@@ -61,9 +55,15 @@
   `(progn
      (def-asm-space ,space-name)
      ,@(loop for spec in block-specs
-            collect (if (symbolp spec)
-                        `(def-block ,spec :in ,space-name)
-                        `,(append '(def-block) (list (car spec)) (cdr spec) `(:in ,space-name))))))
+          collect (if (symbolp spec)
+                      `(def-block ,spec :in ,space-name)
+                      `,(append '(def-block) (list (car spec)) (cdr spec) `(:in ,space-name))))))
+
+(def-space-n-blocks armish-user
+  user-block)
+
+(in-asm-space armish-user)
+(in-block user-block)
 
 ;; allow macro's in assembly
 ;; don't want to take away any of the power of macro's
