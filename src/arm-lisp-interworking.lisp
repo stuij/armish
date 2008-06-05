@@ -112,10 +112,24 @@
   (defun emit-init-fn ()
     (funcall init-fn)))
 
+(defmacro set-asm-final-routines (&body forms)
+  `(set-asm-final-fn (lambda ()
+                       ,@forms)))
+
+(let ((final-fn (lambda ()
+                  (warn "no final-fn defined"))))
+
+  (defun set-asm-final-fn (fn)
+    (setf final-fn fn))
+  
+  (defun emit-final-fn ()
+    (funcall final-fn)))
+
 (defun emit-arm-fns (&optional (asm-block *current-asm-block*))
   (append (emit-init-fn)
           (loop for init being the hash-value in (fns-of asm-block)
-             append (funcall init))))
+             append (funcall init))
+          (emit-final-fn)))
 
 (defmacro def-asm-fn-raw (name args &body body)
   `(setf (gethash ',name (fns-of *current-asm-block*))
