@@ -27,18 +27,15 @@
 
    :def-asm-macro
    :def-asm-macro-lite
-   :add-asm-macro
    :asm-macro-p
 
    :gather-code
    :gather
    :emit
-   :def-arm
    :emit-arm-fns
    :def-asm-fn-raw
    :def-asm-fn
-   :set-asm-init-fn
    :set-asm-init-routines
-
+   :set-asm-final-routines
 
    :*base-address*))
