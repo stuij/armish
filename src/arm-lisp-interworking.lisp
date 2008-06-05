@@ -76,16 +76,18 @@
   (member symbol *asm-macros*))
 
 (defmacro def-asm-macro-lite (name &body body)
-  `(progn
-     (add-asm-macro ',name)
-     (defmacro ,name ()
-       ',body)))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (progn
+       (add-asm-macro ',name)
+       (defmacro ,name ()
+         ',body))))
 
 (defmacro def-asm-macro (name args &body body)
-  `(progn
-     (add-asm-macro ',name)
-     (defmacro ,name ,args
-       ,@body)))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (progn
+       (add-asm-macro ',name)
+       (defmacro ,name ,args
+         ,@body))))
 
 ;; assembly snippets gathering machinery
 (defun gather-code (&rest args)
