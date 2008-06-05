@@ -103,6 +103,11 @@
   `(set-asm-init-fn (lambda ()
                       ,@forms)))
 
+(defmacro def-asm (name args &rest body)
+  "fn that outputs arm code"
+  `(defun ,name ,args
+     (emit-asm ,@body)))
+
 (let ((init-fn (lambda ()
                  (warn "no init-fn defined"))))
 
