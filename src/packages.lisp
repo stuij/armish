@@ -23,6 +23,7 @@
    :def-block
    :in-block
    :def-space-n-blocks
+   :def-space-n-clusters-n-blocks
    :clear-current-block
 
    :def-asm-macro

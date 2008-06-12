@@ -20,5 +20,6 @@
              (:file "directives"            :depends-on ("assembler"))
              (:file "arm-lisp-interworking" :depends-on ("arm-instructions"))
              (:file "test"                  :depends-on ("arm-instructions"
+                                                         "arm-lisp-interworking"
                                                          "thumb-instructions"
                                                          "directives"))))))

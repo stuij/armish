@@ -2,19 +2,17 @@
 
 ;; asm spaces
 (defparameter *asm-spaces* (make-hash-table))
+(defparameter *asm-blocks* (make-hash-table))
 (defparameter *current-asm-space* nil)
 (defparameter *current-asm-block* nil)
+(defparameter *current-asm-cluster* nil)
 
+;; (clrhash *asm-spaces*)
+;; (clrhash *asm-blocks*)
+
+;; spaces
 (defclass asm-space ()
-  ((blocks :accessor blocks-of :initform (make-hash-table) :initarg :blocks)))
-
-(defclass asm-block ()
-  ((base-address :accessor base-address-of :initform 0 :initarg :base-address)
-   (fns :accessor fns-of :initform (make-hash-table) :initarg :fns)
-   (labels :accessor labels-of :initform (make-hash-table) :initarg :labels)))
-
-(defun clear-current-block ()
-  (clrhash (fns-of *current-asm-block*)))
+  ((clusters :accessor clusters-of :initform (make-hash-table) :initarg :clusters)))
 
 (defun %def-asm-space (name)
   (setf (gethash name *asm-spaces*) (make-instance 'asm-space)))
@@ -23,7 +21,9 @@
   `(%def-asm-space ',name))
 
 (defun get-asm-space (name)
-  (gethash name *asm-spaces*))
+  (aif (gethash name *asm-spaces*)
+       it
+       (error "asm space ~a not found" name)))
 
 (defun %in-asm-space (name)
   (setf *current-asm-space* (get-asm-space name)))
@@ -31,36 +31,101 @@
 (defmacro in-asm-space (name)
   `(%in-asm-space ',name))
 
-(defun %def-block (name &key in (base-address 0))
-  (setf (gethash name (blocks-of (get-asm-space in)))
-        (make-instance 'asm-block
-                       :base-address base-address)))
 
-(defmacro def-block (name &key in (base-address 0))
-  `(%def-block ',name :in ',in :base-address ,base-address))
+;; clusters
+(defclass asm-cluster ()
+  ((base-address :accessor base-address-of :initform 0 :initarg :base-address)
+   (labels :accessor labels-of :initform (make-hash-table) :initarg :labels)
+   (blocks :accessor blocks-of :initform (make-hash-table) :initarg :blocks)))
 
-(defun get-block (name &key in)
+(defun %def-cluster (name &key in base-address)
   (let ((asm-space (if in
-                       in
+                       (get-asm-space in)
                        *current-asm-space*)))
-    (gethash name (blocks-of asm-space))))
+    (setf (gethash name (clusters-of asm-space))
+          (make-instance 'asm-cluster
+                         :base-address base-address))))
 
-(defun %in-block (name &key in)
-  (setf *current-asm-block* (get-block name :in in)))
+(defmacro def-cluster (name &key in (base-address 0))
+  `(%def-cluster ',name :in ',in :base-address ,base-address))
 
-(defmacro in-block (name &key in)
-  `(%in-block ',name :in ,in))
+(defun get-cluster (name &key in)
+  (let ((asm-space (if in
+                       (get-asm-space in)
+                       *current-asm-space*)))
+    (aif (gethash name (clusters-of asm-space))
+         it
+         (error "no cluster of name ~a found in asm-space ~a" name in))))
 
-(defmacro def-space-n-blocks (space-name &body block-specs)
+;; blocks
+(defclass asm-block ()
+  ((fns :accessor fns-of :initform (make-hash-table) :initarg :fns)))
+
+(defun clear-current-block ()
+  (clrhash (fns-of *current-asm-block*)))
+
+(defun %def-block (name)
+  (setf (gethash name *asm-blocks*)
+        (make-instance 'asm-block)))
+
+(defmacro def-block (name)
+  `(%def-block ',name))
+
+(defun get-block (name)
+  (gethash name *asm-blocks*))
+
+(defun get-blocks (block-list)
+  (loop for block in block-list
+     collect (get-block block)))
+
+(defun %in-block (name)
+  (aif (get-block name)
+       (setf *current-asm-block* it)
+       (error "block name ~a not found" name)))
+
+(defmacro in-block (name)
+  `(%in-block ',name))
+
+(defun %set-block (block-name cluster-name &key in)
+  (let ((cluster (get-cluster cluster-name :in in)))
+    (setf (gethash block-name (blocks-of cluster))
+          (aif (gethash block-name *asm-blocks*)
+               it
+               (error "no binding found for block named ~a" block-name)))))
+
+(defmacro set-block (da-block cluster-name &key in)
+  `(%set-block ,da-block ,cluster-name :in ',in))
+
+(defun %set-blocks (block-list cluster-name &key in)
+  (loop for block in block-list
+     do (%set-block block cluster-name :in in)))
+
+(defmacro set-blocks (block-list cluster-name &key in)
+  `(%set-blocks ',block-list ',cluster-name :in ',in))
+
+;; compound
+(defmacro def-space-n-clusters-n-blocks (space-name cluster-specs block-specs)
   `(progn
      (def-asm-space ,space-name)
      ,@(loop for spec in block-specs
           collect (if (symbolp spec)
-                      `(def-block ,spec :in ,space-name)
-                      `,(append '(def-block) (list (car spec)) (cdr spec) `(:in ,space-name))))))
+                      `(def-block ,spec)
+                      `,(append '(def-block) (list (car spec)) (cdr spec) `(:in ,space-name))))
+     ,@(loop for spec in cluster-specs
+          collect (let* ((spec-name (car spec))
+                         (spec-plist (cdr spec))
+                         (block-list (getf spec-plist :blocks))
+                         (un-blocked-spec-plist (remove-plist spec-plist :blocks)))
+                    `(progn
+                       ,(if (symbolp spec)
+                            `(def-cluster ,spec :in ,space-name)
+                            `,(append '(def-cluster) (list spec-name) un-blocked-spec-plist `(:in ,space-name)))
+                       ,(if block-list
+                            `(set-blocks ,block-list ,spec-name :in ,space-name)))))))
 
-(def-space-n-blocks armish-user
-  user-block)
+(def-space-n-clusters-n-blocks armish-user
+    ((user-cluster :blocks (user-block)))
+  (user-block))
 
 (in-asm-space armish-user)
 (in-block user-block)
@@ -130,10 +195,16 @@
   (defun emit-final-fn ()
     (funcall final-fn)))
 
-(defun emit-arm-fns (&optional (asm-block *current-asm-block*))
+
+(defun emit-arm-fns (&optional (asm-cluster *current-asm-cluster*))
+  "TODO: this is one of the major cleanup entry points into wiring up
+the asm spaces stuff. the init- and final functions should be bound
+to either a block, space or cluster, and emit-arm-fns should be packed up
+in something more elegant"
   (append (emit-init-fn)
-          (loop for init being the hash-value in (fns-of asm-block)
-             append (funcall init))
+          (loop for asm-block being the hash-value in (blocks-of asm-cluster)
+             append (loop for asm-fn being the hash-value in (fns-of asm-block)
+                       append (funcall asm-fn)))
           (emit-final-fn)))
 
 (defmacro def-asm-fn-raw (name args &body body)
