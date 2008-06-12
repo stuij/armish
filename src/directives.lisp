@@ -43,7 +43,7 @@
   (process-bytes bytes 64))
 
 (define-directive bin (pack-size bin)
-  (process-bytes bin (* pack-size 8)))
+  (process-bytes bin pack-size))
 
 (define-directive binae (bins)
   (loop for bin in bins
