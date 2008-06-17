@@ -95,8 +95,23 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
        (ash rot_imm 8)
        base_imm)))
 
-(defun dp-shifter-immediate-check (val)
-  (if (<= val #b11111) val (error "dp-instr shiftable imm is bigger than 31")))
+(defun non-32-allowed-imm-check (val)
+  (if (or (<= val #b11111)
+          (>= val 0))
+      val
+      (error "dp-instr shiftable imm is bigger than 31 or smaller than 1")))
+
+(defun 32-allowed-imm-check (val)
+  (cond
+    ((= val 32) 0)
+    ((or (<= val #b11111) (>= val 0)) val)
+    (t (error "dp-instr shiftable imm is bigger than 32 or smaller than 1"))))
+
+(defun dp-shifter-immediate-check (shifter val)
+  (case shifter
+       ((:lsl :ror) (non-32-allowed-imm-check val))
+       ((:lsr :asr) (32-allowed-imm-check val))
+       (otherwise (error "shifter ~a not eql to :lsl :lsr :asr or :ror" shifter))))
 
 (defun process-dp-register-shifter (shifter shiftee)
   (+ (ash (translate-register shiftee) 8)
@@ -108,7 +123,7 @@ So sorry, but i'm just gonna error you on this outrageous misuse of nv."))
        (otherwise (error "shifter ~a not eql to :lsl :lsr :asr or :ror" shifter)))))
 
 (defun process-dp-immediate-shifter (shifter shiftee)
-  (+ (ash (dp-shifter-immediate-check shiftee) 7)
+  (+ (ash (dp-shifter-immediate-check shifter shiftee) 7)
      (case shifter
        (:lsl 0)
        (:lsr (ash 1 5))
